@@ -33,7 +33,17 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "httpx>=0.26.0",
     "asyncio>=3.4.3",
+    "neo4j>=5.15.0",
+    "langgraph>=0.0.1",
+    "click>=8.1.0",
+    "networkx>=3.2.0",
+    "pandas>=2.1.0",
 ]
+
+[project.scripts]
+wsg = "src.cli.main:cli"
+workplace-social-graph = "src.cli.main:cli"
+robo-peoples-person = "src.cli.main:cli"
 
 [project.optional-dependencies]
 dev = [
@@ -53,7 +63,7 @@ email = [
 ]
 
 search = [
-    "brave-search>=0.3.0",
+    # "brave-search>=0.2.0",  # Temporarily disabled due to metadata issues
 ]
 
 social = [
@@ -71,11 +81,8 @@ Documentation = "https://github.com/shulgaalexey/robo-peoples-person#readme"
 Repository = "https://github.com/shulgaalexey/robo-peoples-person"
 Issues = "https://github.com/shulgaalexey/robo-peoples-person/issues"
 
-[project.scripts]
-robo-peoples-person = "robo_peoples_person.cli:main"
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/robo_peoples_person"]
+packages = ["src"]
 
 [tool.hatch.build.targets.sdist]
 include = [

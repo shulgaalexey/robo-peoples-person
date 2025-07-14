@@ -45,6 +45,139 @@ class WorkplaceTools:
             self.export_manager = ExportManager(manager)
         return self.export_manager
 
+    async def add_coworker(self, name: str, email: str = None, department: str = None, role: str = None, **kwargs) -> str:
+        """Add a coworker to the workplace social graph."""
+        try:
+            # Create Person model
+            person = Person(
+                name=name,
+                role=role,
+                department=department,
+                email=email,
+                phone=kwargs.get("phone"),
+                manager=kwargs.get("manager"),
+                expertise_areas=kwargs.get("expertise", []),
+                communication_preference=CommunicationPreference(kwargs.get("communication_preference")) if kwargs.get("communication_preference") else None,
+                timezone=kwargs.get("timezone"),
+                notes=kwargs.get("notes")
+            )
+
+            # Add to database
+            manager_instance = await self._get_neo4j_manager()
+            person_id = await manager_instance.add_coworker(person)
+
+            return f"✅ Added {name} successfully to the workplace graph"
+
+        except Exception as e:
+            logger.error(f"Failed to add coworker {name}: {e}")
+            return f"❌ Failed to add {name}: {str(e)}"
+
+    async def find_experts(self, expertise_area: str, department: str = None, limit: int = 5) -> str:
+        """Find subject matter experts by expertise area."""
+        try:
+            # Get experts from database
+            manager_instance = await self._get_neo4j_manager()
+            experts = await manager_instance.find_experts(expertise_area, department)
+
+            if not experts:
+                return f"🎯 Found 0 expert(s) for '{expertise_area}'"
+
+            # Limit results
+            experts = experts[:limit]
+
+            result = f"🎯 Found {len(experts)} expert(s) for '{expertise_area}':\n"
+            for expert in experts:
+                result += f"• {expert.name} ({expert.department}) - {expert.email}\n"
+                if expert.expertise_areas:
+                    result += f"  Skills: {', '.join(expert.expertise_areas)}\n"
+
+            return result.strip()
+
+        except Exception as e:
+            logger.error(f"Failed to find experts for {expertise_area}: {e}")
+            return f"❌ Failed to find experts: {str(e)}"
+
+    async def who_should_i_ask(self, question_topic: str, department: str = None) -> str:
+        """Find the right person to ask about a specific topic."""
+        try:
+            # First, find experts in the topic area
+            manager_instance = await self._get_neo4j_manager()
+            experts = await manager_instance.find_experts(question_topic, department)
+
+            if experts:
+                expert = experts[0]  # Get the top expert
+                return f"👥 For '{question_topic}', I recommend asking {expert.name} ({expert.department}) - {expert.email}"
+
+            # If no direct experts, suggest based on department
+            if department:
+                team_members = await manager_instance.get_team_members(department=department)
+                if team_members:
+                    member = team_members[0]
+                    return f"👥 No specific experts found for '{question_topic}', but you could try asking {member.name} from {department} - {member.email}"
+
+            return f"🤷 No specific experts found for '{question_topic}'. Consider posting in a general team channel."
+
+        except Exception as e:
+            logger.error(f"Failed to find who to ask about {question_topic}: {e}")
+            return f"❌ Failed to find recommendations: {str(e)}"
+
+    async def get_org_chart(self, department: str = None) -> str:
+        """Get organizational chart data."""
+        try:
+            analyzer = await self._get_network_analyzer()
+            org_chart = await analyzer.get_org_chart_data(department)
+
+            if not org_chart:
+                return "📊 No organizational structure found"
+
+            return f"📊 Organizational chart generated for {department or 'all departments'}"
+
+        except Exception as e:
+            logger.error(f"Failed to get org chart: {e}")
+            return f"❌ Failed to generate org chart: {str(e)}"
+
+    async def export_data(self, format: str = "csv", output_path: str = "./export", include_sensitive: bool = False) -> str:
+        """Export workplace data."""
+        try:
+            exporter = await self._get_export_manager()
+
+            if format.lower() == "csv":
+                success = await exporter.export_contacts_csv(f"{output_path}/contacts.csv")
+                if success:
+                    return f"💾 Data exported successfully to {output_path}/contacts.csv"
+                else:
+                    return "❌ Failed to export data"
+            else:
+                return f"❌ Unsupported format: {format}"
+
+        except Exception as e:
+            logger.error(f"Failed to export data: {e}")
+            return f"❌ Failed to export data: {str(e)}"
+
+    async def get_network_insights(self, person: str = None, department: str = None) -> str:
+        """Get network insights and analysis."""
+        try:
+            analyzer = await self._get_network_analyzer()
+
+            # Build the graph
+            await analyzer.build_graph_from_neo4j()
+
+            if person:
+                metrics = analyzer.calculate_centrality_metrics(person)
+                if person in metrics:
+                    metric = metrics[person]
+                    return f"🔍 Network insights for {person}: Betweenness centrality: {metric.betweenness_centrality:.3f}"
+
+            # General insights
+            total_nodes = analyzer.graph.number_of_nodes()
+            total_edges = analyzer.graph.number_of_edges()
+
+            return f"🔍 Network insights: {total_nodes} people, {total_edges} connections"
+
+        except Exception as e:
+            logger.error(f"Failed to get network insights: {e}")
+            return f"❌ Failed to get insights: {str(e)}"
+
 
 # Tool functions for AI agents
 

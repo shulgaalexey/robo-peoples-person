@@ -21,8 +21,8 @@ A comprehensive AI-powered system for managing and analyzing workplace social ne
 
 2. **Set up virtual environment**
    ```powershell
-   python -m venv venv
-   .\venv\Scripts\Activate.ps1
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
    ```
 
 3. **Install uv package manager**
@@ -300,7 +300,7 @@ uv run python -m src.main
 
 ### Virtual Environment
 ```powershell
-.\venv\Scripts\Activate.ps1        # Activate environment
+.\.venv\Scripts\Activate.ps1        # Activate environment
 deactivate                         # Deactivate environment
 ```
 
@@ -387,7 +387,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Ensure you're using the correct activation script:
 ```powershell
 # Correct (PowerShell)
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
 # Incorrect (Command Prompt style)
 venv\Scripts\activate.bat

@@ -2,7 +2,7 @@
 - **Always read `PLANNING.md`** at the start of a new conversation to understand the project's architecture, goals, style, and constraints.
 - **Check `TASK.md`** before starting a new task. If the task isn't listed, add it with a brief description and today's date.
 - **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
-- **Use the virtual environment** whenever executing Python commands, including for unit tests. On Windows, activate with `.\venv\Scripts\Activate.ps1` in PowerShell.
+- **Use the virtual environment** whenever executing Python commands, including for unit tests. On Windows, activate with `.\.venv\Scripts\Activate.ps1` in PowerShell.
 - **Store all prompts in `./prompts/` folder** - this is the central location for all prompts, PRPs, examples, and command templates. Exception: copilot-instructions.md stays in `./.github/` folder.
 
 ### 🖥️ Windows/PowerShell Environment
@@ -11,7 +11,7 @@
 - **Package Manager**: uv for fast dependency management
 - **Command Chaining**: Use `;` instead of `&&` for multiple commands in PowerShell
 - **Path Separators**: Use forward slashes `/` in Python code, backslashes `\` only in PowerShell paths
-- **Virtual Environment**: Always use `.\venv\Scripts\Activate.ps1` for activation
+- **Virtual Environment**: Always use `.\.venv\Scripts\Activate.ps1` for activation
 
 ### 🤖 GitHub Copilot Integration
 - **Leverage Copilot Chat**: For architectural discussions and complex problem solving
@@ -31,7 +31,7 @@ All PRPs and templates are stored in `./prompts/` folder:
 ### 🔧 Essential Commands (PowerShell)
 ```powershell
 # Virtual Environment
-.\venv\Scripts\Activate.ps1                # Activate virtual environment
+.\.venv\Scripts\Activate.ps1                # Activate virtual environment
 deactivate                                 # Deactivate virtual environment
 
 # Development

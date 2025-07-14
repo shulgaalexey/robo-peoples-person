@@ -124,7 +124,7 @@ class InsightsAgent:
 
             # Get recent interactions
             since_date = datetime.now() - timedelta(days=days_back)
-            recent_interactions = await self.neo4j_manager.get_interactions_since(since_date)
+            recent_interactions = await self.neo4j_manager.get_recent_interactions(days=7)
 
             insights.append(f"📈 **Activity Summary:**")
             insights.append(f"• Total interactions: {len(recent_interactions)}")
@@ -143,7 +143,7 @@ class InsightsAgent:
                 top_collaborators = sorted(interaction_counts.items(), key=lambda x: x[1], reverse=True)[:5]
                 insights.append("⭐ **Most Active Collaborators:**")
                 for email, count in top_collaborators:
-                    person = await self.neo4j_manager.get_person_by_email(email)
+                    person = await self.neo4j_manager.find_person_by_email(email)
                     name = person.name if person else email.split('@')[0]
                     insights.append(f"• {name}: {count} interactions")
                 insights.append("")
@@ -253,7 +253,7 @@ class InsightsAgent:
         try:
             await self._ensure_network_loaded()
 
-            person = await self.neo4j_manager.get_person_by_email(person_email)
+            person = await self.neo4j_manager.find_person_by_email(person_email)
             if not person:
                 return f"❌ Person with email {person_email} not found"
 
@@ -280,8 +280,8 @@ class InsightsAgent:
                     })
 
             # 2. Similar skills
-            if person.skills:
-                for skill in person.skills:
+            if person.expertise_areas:
+                for skill in person.expertise_areas:
                     skill_experts = await self.neo4j_manager.find_experts(skill, limit=3)
                     for expert in skill_experts:
                         if expert.email not in connected_emails and len(recommendations) < limit:
@@ -298,8 +298,8 @@ class InsightsAgent:
                 second_degree = await self.neo4j_manager.get_person_relationships(connection.person2_email)
                 for second_rel in second_degree:
                     if second_rel.person2_email not in connected_emails and len(recommendations) < limit:
-                        bridge_person = await self.neo4j_manager.get_person_by_email(connection.person2_email)
-                        potential_connection = await self.neo4j_manager.get_person_by_email(second_rel.person2_email)
+                        bridge_person = await self.neo4j_manager.find_person_by_email(connection.person2_email)
+                        potential_connection = await self.neo4j_manager.find_person_by_email(second_rel.person2_email)
                         if bridge_person and potential_connection:
                             recommendations.append({
                                 "person": potential_connection,
@@ -324,8 +324,8 @@ class InsightsAgent:
                     insights.append(f"{i}. **{p.name}** ({p.department})")
                     insights.append(f"   Role: {p.role}")
                     insights.append(f"   Reason: {rec['reason']}")
-                    if p.skills:
-                        insights.append(f"   Skills: {', '.join(p.skills[:3])}")
+                    if p.expertise_areas:
+                        insights.append(f"   Skills: {', '.join(p.expertise_areas[:3])}")
                     insights.append("")
             else:
                 insights.append("🤔 No new connection recommendations found at this time.")
@@ -413,8 +413,8 @@ class InsightsAgent:
         cross_dept = {}
 
         for interaction in interactions:
-            person1 = await self.neo4j_manager.get_person_by_email(interaction.person1_email)
-            person2 = await self.neo4j_manager.get_person_by_email(interaction.person2_email)
+            person1 = await self.neo4j_manager.find_person_by_email(interaction.person1_email)
+            person2 = await self.neo4j_manager.find_person_by_email(interaction.person2_email)
 
             if person1 and person2 and person1.department != person2.department:
                 depts = tuple(sorted([person1.department, person2.department]))

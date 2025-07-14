@@ -47,6 +47,10 @@ class Settings(BaseSettings):
         default=False,
         description="Enable debug mode"
     )
+    log_level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+    )
 
     # CLI Configuration
     cli_output_format: str = Field(
@@ -77,6 +81,21 @@ class Settings(BaseSettings):
         default=1000,
         description="Batch size for data export operations"
     )
+
+    @property
+    def database_url(self) -> str:
+        """Construct the full database URL with credentials.
+
+        Returns:
+            str: Complete Neo4j connection URL with credentials.
+        """
+        # Extract the host part from the URI
+        if "://" in self.neo4j_uri:
+            protocol, host = self.neo4j_uri.split("://", 1)
+        else:
+            protocol, host = "bolt", self.neo4j_uri
+
+        return f"{protocol}://{self.neo4j_user}:{self.neo4j_password}@{host}"
 
 
 def get_settings() -> Settings:

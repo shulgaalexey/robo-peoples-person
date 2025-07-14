@@ -167,8 +167,12 @@ class NetworkAnalyzer:
         Returns:
             Dict[str, NetworkMetrics]: Centrality metrics by person
         """
-        if not self.graph:
+        if self.graph is None:
             raise ValueError("Graph not built. Call build_graph_from_neo4j() first.")
+
+        # Handle empty graphs
+        if len(self.graph.nodes()) == 0:
+            return {}
 
         # Calculate various centrality measures
         degree_centrality = nx.degree_centrality(self.graph)

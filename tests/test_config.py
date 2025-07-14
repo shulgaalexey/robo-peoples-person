@@ -10,15 +10,24 @@ from src.config.settings import Settings
 
 def test_settings_defaults():
     """Test default configuration values."""
-    settings = Settings()
+    # Test with no env file to get true defaults
+    import os
 
-    assert settings.neo4j_uri == "bolt://localhost:7687"
-    assert settings.neo4j_user == "neo4j"
-    assert settings.neo4j_password == "password123"
-    assert settings.neo4j_database == "neo4j"
-    assert settings.app_name == "Robo People's Person"
-    assert settings.app_version == "0.1.0"
-    assert settings.debug == False
+    # Temporarily remove DEBUG from environment to test defaults
+    debug_backup = os.environ.pop('DEBUG', None)
+    try:
+        settings = Settings(_env_file=None)
+        assert settings.neo4j_uri == "bolt://localhost:7687"
+        assert settings.neo4j_user == "neo4j"
+        assert settings.neo4j_password == "password123"
+        assert settings.neo4j_database == "neo4j"
+        assert settings.app_name == "Robo People's Person"
+        assert settings.app_version == "0.1.0"
+        assert settings.debug == False
+    finally:
+        # Restore DEBUG environment variable
+        if debug_backup is not None:
+            os.environ['DEBUG'] = debug_backup
     assert settings.cli_output_format == "table"
     assert settings.cli_color_output == True
     assert settings.agent_memory_size == 1000

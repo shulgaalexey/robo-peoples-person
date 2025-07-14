@@ -16,8 +16,8 @@ AI Agent system designed to care about social interactions, built using modern P
 - **Documentation**: Markdown
 
 ### Virtual Environment
-- **Setup**: Use `python -m venv venv` in PowerShell
-- **Activation**: `.\venv\Scripts\Activate.ps1` in PowerShell
+- **Setup**: Use `python -m venv .venv` in PowerShell
+- **Activation**: `.\.venv\Scripts\Activate.ps1` in PowerShell
 - **Package Management**: `uv` for fast dependency resolution
 
 ## Project Structure & Conventions
@@ -53,7 +53,7 @@ robo-peoples-person/
 ### Code Organization Principles
 - **Maximum file length**: 500 lines
 - **Module separation**: Group by feature/responsibility
-- **Agent structure**:  
+- **Agent structure**:
   - `agent.py` - Main agent definition and execution
   - `tools.py` - Tool functions used by the agent
   - `prompts.py` - System prompts
@@ -77,7 +77,7 @@ robo-peoples-person/
 ### Command Reference (PowerShell)
 ```powershell
 # Virtual Environment
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
 # Development
 uv run python -m pytest tests/ -v          # Run tests
@@ -96,7 +96,7 @@ uv sync                                    # Sync dependencies
 - **Coverage**: Minimum 80% test coverage
 - **Test Structure**: Mirror main application structure in `/tests`
 - **Test Types**: Unit tests, integration tests, end-to-end tests
-- **Test Categories**:  
+- **Test Categories**:
   - Happy path test
   - Edge case test
   - Failure case test

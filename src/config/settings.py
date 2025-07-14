@@ -47,6 +47,10 @@ class Settings(BaseSettings):
         default=False,
         description="Enable debug mode"
     )
+    log_level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+    )
 
     # CLI Configuration
     cli_output_format: str = Field(

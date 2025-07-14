@@ -174,7 +174,9 @@ class WorkplaceHierarchyMigration(Migration):
     async def down(self, manager: Neo4jManager) -> None:
         """Remove workplace hierarchy constraints."""
         # Remove triggers if they were created
-        logger.info("✓ Workplace hierarchy constraints removed")
+        async with manager.session() as session:
+            # For now, this is just a placeholder since no actual triggers were created
+            logger.info("✓ Workplace hierarchy constraints removed")
 
 
 class MigrationManager:

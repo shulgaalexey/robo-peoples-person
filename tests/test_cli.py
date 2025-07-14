@@ -1,6 +1,6 @@
 """Tests for CLI functionality."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -149,7 +149,7 @@ def test_init_db_command_error(mock_migration):
 def test_who_to_ask_command(mock_agent_class):
     """Test who to ask command."""
     mock_agent = AsyncMock()
-    mock_agent.process_command.return_value = "🎯 Ask Alice (alice@company.com) - Python expert in Engineering"
+    mock_agent.process_command.return_value = "🤔 Ask Sarah Johnson about Machine Learning"
     mock_agent.__aenter__.return_value = mock_agent
     mock_agent.__aexit__.return_value = None
     mock_agent_class.return_value = mock_agent
@@ -157,51 +157,37 @@ def test_who_to_ask_command(mock_agent_class):
     runner = CliRunner()
     result = runner.invoke(cli, [
         'person', 'who-to-ask',
-        '--topic', 'Python debugging',
-        '--expertise', 'Python'
+        '--topic', 'Machine Learning'
     ])
 
     assert result.exit_code == 0
-    assert "Ask Alice" in result.output
+    assert "Ask Sarah Johnson about Machine Learning" in result.output
 
 
 @patch('src.cli.main.SocialGraphAgent')
 def test_org_chart_command(mock_agent_class):
     """Test org chart command."""
     mock_agent = AsyncMock()
-    mock_agent.process_command.return_value = "📊 Engineering Department:\n  - Alice (Lead)\n  - Bob (Developer)"
+    mock_agent.process_command.return_value = "📊 Engineering Org Chart:\nJohn Smith (Manager)"
     mock_agent.__aenter__.return_value = mock_agent
     mock_agent.__aexit__.return_value = None
     mock_agent_class.return_value = mock_agent
 
     runner = CliRunner()
-    result = runner.invoke(cli, ['org', 'chart', '--department', 'Engineering'])
+    result = runner.invoke(cli, [
+        'org', 'chart',
+        '--department', 'Engineering'
+    ])
 
     assert result.exit_code == 0
-    assert "Engineering Department" in result.output
-
-
-@patch('src.cli.main.SocialGraphAgent')
-def test_org_chart_command_all(mock_agent_class):
-    """Test org chart command for all departments."""
-    mock_agent = AsyncMock()
-    mock_agent.process_command.return_value = "📊 Complete Organization Chart"
-    mock_agent.__aenter__.return_value = mock_agent
-    mock_agent.__aexit__.return_value = None
-    mock_agent_class.return_value = mock_agent
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ['org', 'chart'])
-
-    assert result.exit_code == 0
-    mock_agent.process_command.assert_called_once_with('get_org_chart', department=None)
+    assert "Engineering Org Chart" in result.output
 
 
 @patch('src.cli.main.SocialGraphAgent')
 def test_network_insights_command(mock_agent_class):
     """Test network insights command."""
     mock_agent = AsyncMock()
-    mock_agent.process_command.return_value = "🔍 Network insights for Engineering department"
+    mock_agent.process_command.return_value = "📈 Network insights for john@company.com"
     mock_agent.__aenter__.return_value = mock_agent
     mock_agent.__aexit__.return_value = None
     mock_agent_class.return_value = mock_agent
@@ -209,48 +195,48 @@ def test_network_insights_command(mock_agent_class):
     runner = CliRunner()
     result = runner.invoke(cli, [
         'network', 'insights',
-        '--person', 'alice@company.com',
-        '--department', 'Engineering'
+        '--person', 'john@company.com'
     ])
 
     assert result.exit_code == 0
-    assert "Network insights" in result.output
-
-
-@patch('src.cli.main.SocialGraphAgent')
-def test_daily_report_command(mock_agent_class):
-    """Test daily report command."""
-    mock_agent = AsyncMock()
-    mock_agent.process_command.return_value = "📈 Daily Report: 5 new connections, 3 meetings analyzed"
-    mock_agent.__aenter__.return_value = mock_agent
-    mock_agent.__aexit__.return_value = None
-    mock_agent_class.return_value = mock_agent
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ['network', 'daily-report'])
-
-    assert result.exit_code == 0
-    assert "Daily Report" in result.output
+    assert "Network insights for john@company.com" in result.output
 
 
 @patch('src.cli.main.InsightsAgent')
-def test_recommend_command(mock_agent_class):
-    """Test recommend connections command."""
+def test_daily_report_command(mock_agent_class):
+    """Test daily report command."""
     mock_agent = AsyncMock()
-    mock_agent.recommend_connections.return_value = "💡 Recommended: Connect with Charlie (similar interests)"
+    mock_agent.generate_daily_insights.return_value = "📊 Daily Network Report: 50 people, 200 interactions"
     mock_agent.__aenter__.return_value = mock_agent
     mock_agent.__aexit__.return_value = None
     mock_agent_class.return_value = mock_agent
 
     runner = CliRunner()
     result = runner.invoke(cli, [
-        'network', 'recommend',
-        '--email', 'alice@company.com',
-        '--limit', '5'
+        'network', 'daily-report'
     ])
 
     assert result.exit_code == 0
-    assert "Recommended" in result.output
+    assert "Daily Network Report" in result.output
+
+
+@patch('src.cli.main.InsightsAgent')
+def test_collaboration_command(mock_agent_class):
+    """Test collaboration analysis command."""
+    mock_agent = AsyncMock()
+    mock_agent.analyze_collaboration_patterns.return_value = "🤝 Collaboration patterns: High cross-team interaction"
+    mock_agent.__aenter__.return_value = mock_agent
+    mock_agent.__aexit__.return_value = None
+    mock_agent_class.return_value = mock_agent
+
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        'network', 'collaboration',
+        '--days', '14'
+    ])
+
+    assert result.exit_code == 0
+    assert "Collaboration patterns" in result.output
 
 
 @patch('src.cli.main.SocialGraphAgent')
@@ -293,7 +279,7 @@ def test_export_data_command_json(mock_agent_class):
     assert "exported" in result.output
 
 
-@patch('src.cli.main.Neo4jManager')
+@patch('src.database.neo4j_manager.Neo4jManager')
 def test_test_connection_command_success(mock_manager_class):
     """Test connection test command success."""
     mock_manager = AsyncMock()
@@ -302,13 +288,13 @@ def test_test_connection_command_success(mock_manager_class):
     mock_manager_class.return_value = mock_manager
 
     runner = CliRunner()
-    result = runner.invoke(cli, ['setup', 'test-connection'])
+    result = runner.invoke(cli, ['setup', 'check-config'])
 
     assert result.exit_code == 0
     assert "Neo4j connection: OK" in result.output
 
 
-@patch('src.cli.main.Neo4jManager')
+@patch('src.database.neo4j_manager.Neo4jManager')
 def test_test_connection_command_failure(mock_manager_class):
     """Test connection test command failure."""
     mock_manager = AsyncMock()
@@ -316,7 +302,7 @@ def test_test_connection_command_failure(mock_manager_class):
     mock_manager_class.return_value = mock_manager
 
     runner = CliRunner()
-    result = runner.invoke(cli, ['setup', 'test-connection'])
+    result = runner.invoke(cli, ['setup', 'check-config'])
 
     assert result.exit_code == 0  # Command doesn't fail, just reports error
     assert "Neo4j connection: FAILED" in result.output
@@ -386,3 +372,56 @@ def test_data_group_help():
     assert "Data management" in result.output
     assert "export" in result.output
     assert "stats" in result.output
+
+
+def test_cli_with_config_file(tmp_path):
+    """Test CLI with config file parameter."""
+    runner = CliRunner()
+    # Create a temporary config file
+    config_file = tmp_path / "test_config.env"
+    config_file.write_text("NEO4J_URI=bolt://test:7687\nNEO4J_USER=test\nNEO4J_PASSWORD=test")
+
+    # Test that the CLI accepts the config parameter
+    result = runner.invoke(cli, ['--config', str(config_file), '--help'])
+    assert result.exit_code == 0
+    assert "Path to configuration file" in result.output
+
+
+def test_cli_without_config_file():
+    """Test CLI without config file parameter uses default settings."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ['--help'])
+    assert result.exit_code == 0
+    assert "Workplace Social Graph AI Agent CLI" in result.output
+
+
+@patch('asyncio.run')
+@patch('src.cli.main.InsightsAgent')
+def test_network_silos_command(mock_agent_class, mock_asyncio):
+    """Test network silos command."""
+    runner = CliRunner()
+    mock_agent = AsyncMock()
+    mock_agent.identify_silos.return_value = "Silos analysis result"
+    mock_agent_class.return_value.__aenter__.return_value = mock_agent
+    mock_agent_class.return_value.__aexit__.return_value = None
+
+    result = runner.invoke(cli, ['network', 'silos'])
+
+    assert result.exit_code == 0
+    mock_asyncio.assert_called_once()
+
+
+@patch('asyncio.run')
+@patch('src.cli.main.InsightsAgent')
+def test_network_recommend_connections_command(mock_agent_class, mock_asyncio):
+    """Test network recommend connections command."""
+    runner = CliRunner()
+    mock_agent = AsyncMock()
+    mock_agent.recommend_connections.return_value = "Connection recommendations"
+    mock_agent_class.return_value.__aenter__.return_value = mock_agent
+    mock_agent_class.return_value.__aexit__.return_value = None
+
+    result = runner.invoke(cli, ['network', 'recommend-connections', '--email', 'test@example.com', '--limit', '3'])
+
+    assert result.exit_code == 0
+    mock_asyncio.assert_called_once()

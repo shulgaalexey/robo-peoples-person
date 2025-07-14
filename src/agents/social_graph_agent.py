@@ -68,49 +68,43 @@ class SocialGraphAgent:
             command = command.lower().strip()
 
             if command == "add_coworker":
-                return await add_coworker_tool(
-                    workplace_tools=self.workplace_tools,
+                return await self.workplace_tools.add_coworker(
                     name=kwargs.get("name"),
                     email=kwargs.get("email"),
                     department=kwargs.get("department"),
                     role=kwargs.get("role"),
-                    skills=kwargs.get("skills", []),
-                    location=kwargs.get("location"),
+                    expertise=kwargs.get("skills", []),
+                    phone=kwargs.get("phone"),
                     manager=kwargs.get("manager")
                 )
 
             elif command == "find_experts":
-                return await find_experts_tool(
-                    workplace_tools=self.workplace_tools,
-                    skill=kwargs.get("skill"),
+                return await self.workplace_tools.find_experts(
+                    expertise_area=kwargs.get("skill") or kwargs.get("expertise_area"),
                     department=kwargs.get("department"),
                     limit=kwargs.get("limit", 5)
                 )
 
             elif command == "who_should_i_ask":
-                return await who_should_i_ask_tool(
-                    workplace_tools=self.workplace_tools,
-                    topic=kwargs.get("topic"),
-                    expertise_area=kwargs.get("expertise_area")
+                return await self.workplace_tools.who_should_i_ask(
+                    question_topic=kwargs.get("topic") or kwargs.get("question_topic"),
+                    department=kwargs.get("department")
                 )
 
             elif command == "get_org_chart":
-                return await get_org_chart_tool(
-                    workplace_tools=self.workplace_tools,
+                return await self.workplace_tools.get_org_chart(
                     department=kwargs.get("department")
                 )
 
             elif command == "export_data":
-                return await export_data_tool(
-                    workplace_tools=self.workplace_tools,
+                return await self.workplace_tools.export_data(
                     format=kwargs.get("format", "csv"),
                     output_path=kwargs.get("output_path", "./export"),
                     include_sensitive=kwargs.get("include_sensitive", False)
                 )
 
             elif command == "get_network_insights":
-                return await get_network_insights_tool(
-                    workplace_tools=self.workplace_tools,
+                return await self.workplace_tools.get_network_insights(
                     person=kwargs.get("person"),
                     department=kwargs.get("department")
                 )

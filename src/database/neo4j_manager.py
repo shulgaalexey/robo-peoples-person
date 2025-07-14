@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 from neo4j.exceptions import AuthError, ServiceUnavailable
@@ -57,7 +57,7 @@ class Neo4jManager:
             logger.info("Neo4j connection closed")
 
     @asynccontextmanager
-    async def session(self) -> AsyncSession:
+    async def session(self) -> AsyncIterator[AsyncSession]:
         """Get an async Neo4j session context manager.
 
         Yields:
@@ -128,6 +128,53 @@ class Neo4jManager:
                 person_data = record["p"]
                 return Person(**person_data)
             return None
+
+    async def find_person_by_email(self, email: str) -> Optional[Person]:
+        """Find a person by email.
+
+        Args:
+            email: Person's email
+
+        Returns:
+            Person: Person model instance or None if not found
+        """
+        async with self.session() as session:
+            query = """
+            MATCH (p:Person {email: $email})
+            RETURN p
+            """
+
+            result = await session.run(query, email=email)
+            record = await result.single()
+
+            if record:
+                person_data = record["p"]
+                return Person(**person_data)
+            return None
+
+    async def count_people(self) -> int:
+        """Count total number of people in the database.
+
+        Returns:
+            int: Total count of people
+        """
+        async with self.session() as session:
+            query = "MATCH (p:Person) RETURN count(p) as count"
+            result = await session.run(query)
+            record = await result.single()
+            return record["count"] if record else 0
+
+    async def count_relationships(self) -> int:
+        """Count total number of relationships in the database.
+
+        Returns:
+            int: Total count of relationships
+        """
+        async with self.session() as session:
+            query = "MATCH ()-[r:WORKS_WITH|REPORTS_TO|INTERACTS_WITH]->() RETURN count(r) as count"
+            result = await session.run(query)
+            record = await result.single()
+            return record["count"] if record else 0
 
     async def add_relationship(self, relationship: WorkRelationship) -> bool:
         """Add a workplace relationship between two people.
@@ -392,6 +439,83 @@ class Neo4jManager:
                 interactions.append(Interaction(**interaction_data))
 
             return interactions
+
+    async def find_people_by_department(self, department: str) -> List[Person]:
+        """Find all people in a specific department.
+
+        Args:
+            department: Department name
+
+        Returns:
+            List[Person]: List of people in the department
+        """
+        async with self.session() as session:
+            query = "MATCH (p:Person) WHERE p.department = $department RETURN p ORDER BY p.name"
+            result = await session.run(query, department=department)
+            people = []
+
+            async for record in result:
+                person_data = record["p"]
+                people.append(Person(**person_data))
+
+            return people
+
+    async def get_person_relationships(self, person_email: str) -> List[WorkRelationship]:
+        """Get all relationships for a person.
+
+        Args:
+            person_email: Email of the person
+
+        Returns:
+            List[WorkRelationship]: List of relationships
+        """
+        from .models import WorkRelationship
+
+        async with self.session() as session:
+            query = """
+            MATCH (p1:Person {email: $email})-[r:WORKS_WITH]->(p2:Person)
+            RETURN r, p2.email as person2_email
+            """
+            result = await session.run(query, email=person_email)
+            relationships = []
+
+            async for record in result:
+                rel_data = record["r"]
+                relationships.append(WorkRelationship(
+                    person1_email=person_email,
+                    person2_email=record["person2_email"],
+                    relationship_type=rel_data.get("relationship_type", "colleague"),
+                    start_date=rel_data.get("start_date"),
+                    notes=rel_data.get("notes")
+                ))
+
+            return relationships
+
+    async def find_cross_department_connectors(self, limit: int = 10) -> List[Person]:
+        """Find people who connect across departments.
+
+        Args:
+            limit: Maximum number of connectors to return
+
+        Returns:
+            List[Person]: List of cross-department connectors
+        """
+        async with self.session() as session:
+            query = """
+            MATCH (p1:Person)-[:WORKS_WITH]-(p2:Person)
+            WHERE p1.department <> p2.department
+            WITH p1, COUNT(DISTINCT p2.department) as dept_connections
+            WHERE dept_connections > 1
+            RETURN p1 ORDER BY dept_connections DESC LIMIT $limit
+            """
+            result = await session.run(query, limit=limit)
+            connectors = []
+
+            async for record in result:
+                person_data = record["p1"]
+                connectors.append(Person(**person_data))
+
+            return connectors
 
     async def _ensure_person_exists(self, session: AsyncSession, person_name: str) -> None:
         """Ensure a person exists in the database, create if not.
